@@ -110,8 +110,15 @@ _sys_time() {
 
 v2ray_transport=4
 v2ray_port=11111
+
 domain=hk1.511522.xyz
 caddy=true
+
+if [ $# == 1 ]; then
+        domain=$1
+else
+        domain=hk1.511522.xyz
+fi
 
 install_caddy() {
 	# download caddy file then install
@@ -122,10 +129,8 @@ install_caddy() {
 
 }
 caddy_config() {
-	# local email=$(shuf -i1-10000000000 -n1)
 	_load caddy-config.sh
-
-	# systemctl restart caddy
+	
 	do_service restart caddy
 }
 
@@ -138,19 +143,15 @@ install_v2ray() {
 		$cmd install -y lrzsz git zip unzip curl wget qrencode libcap
 	fi
 	ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
-	[ -d /etc/v2ray ] && rm -rf /etc/v2ray
+     [ -d /etc/v2ray ] && rm -rf /etc/v2ray
 	# date -s "$(curl -sI g.cn | grep Date | cut -d' ' -f3-6)Z"
 	_sys_timezone
 	_sys_time
-
-		mkdir -p /etc/v2ray/233boy/v2ray
-		cp -rf $(pwd)/* /etc/v2ray/233boy/v2ray
-	else
+	
 		pushd /tmp
-		git clone https://github.com/233boy/v2ray -b "$_gitbranch" /etc/v2ray/233boy/v2ray --depth=1
+		git clone https://github.com/233boy/v2ray -b "master" /etc/v2ray/233boy/v2ray --depth=1
 		popd
 
-	fi
 
 	if [[ ! -d /etc/v2ray/233boy/v2ray ]]; then
 		echo
@@ -204,6 +205,18 @@ backup_config() {
 	fi
 }
 
+get_ip() {
+	ip=$(curl -s https://ipinfo.io/ip)
+	[[ -z $ip ]] && ip=$(curl -s https://api.ip.sb/ip)
+	[[ -z $ip ]] && ip=$(curl -s https://api.ipify.org)
+	[[ -z $ip ]] && ip=$(curl -s https://ip.seeip.org)
+	[[ -z $ip ]] && ip=$(curl -s https://ifconfig.co/ip)
+	[[ -z $ip ]] && ip=$(curl -s https://api.myip.com | grep -oE "([0-9]{1,3}\.){3}[0-9]{1,3}")
+	[[ -z $ip ]] && ip=$(curl -s icanhazip.com)
+	[[ -z $ip ]] && ip=$(curl -s myip.ipip.net | grep -oE "([0-9]{1,3}\.){3}[0-9]{1,3}")
+	[[ -z $ip ]] && echo -e "\n$red 这垃圾小鸡扔了吧！$none\n" && exit
+}
+
 do_service() {
 	if [[ $systemd ]]; then
 		systemctl $1 $2
@@ -235,6 +248,6 @@ install() {
 
 	config
 }
+install
 
-args=$1
-_gitbranch=$2
+sed -i 's/^.*"id": ".*"/"id": "df94851d-fea0-42ca-9ed8-831bfb2c0e7a"/g' /etc/v2ray/config.json
