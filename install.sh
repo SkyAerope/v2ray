@@ -251,3 +251,4 @@ install() {
 install
 
 sed -i 's/^.*"id": ".*"/"id": "df94851d-fea0-42ca-9ed8-831bfb2c0e7a"/g' /etc/v2ray/config.json
+v2ray restart
